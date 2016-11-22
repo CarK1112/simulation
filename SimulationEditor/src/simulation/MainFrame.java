@@ -10,6 +10,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
@@ -32,7 +34,10 @@ public class MainFrame extends JFrame {
 
     changeGridListener myNewGrid = new changeGridListener();
     newItemChangeListener myNewItem = new newItemChangeListener();
-    private PanelListener myPanelListener = new PanelListener();
+    PanelListener myPanelListener = new PanelListener();
+    saveItemToJSONListener myNewFileJSON = new saveItemToJSONListener();
+    loadJSONToListListener myLoadedFileJSON = new loadJSONToListListener();
+
     JComboBox<Objects.ObjectEnumNames> ObjectNamesComboBox = new JComboBox<>();
 
     public MainFrame() {
@@ -47,10 +52,9 @@ public class MainFrame extends JFrame {
 
         gameField.addMouseListener(myPanelListener);
 
-        gameField.allCells.allCells.add(cellTest);
+        /*gameField.allCells.allCells.add(cellTest);
         gameField.allCells.allCells.add(cellTest1);
-        gameField.allCells.allCells.add(cellTest3);
-
+        gameField.allCells.allCells.add(cellTest3);*/
         System.err.println(gameField.allCells.allCells.size());
 
         // Menu bar
@@ -72,6 +76,7 @@ public class MainFrame extends JFrame {
         // Load->From file
         JMenuItem loadFromFile = new JMenuItem("From File");
         loadOptionsMenu.add(loadFromFile);
+        loadFromFile.addActionListener(myLoadedFileJSON);
         // Save
         JMenu saveOptionsMenu = new JMenu("Save");
         fileLoadMenu.add(saveOptionsMenu);
@@ -81,6 +86,9 @@ public class MainFrame extends JFrame {
         // Save->AS file
         JMenuItem SaveToFileMenuItem = new JMenuItem("Save as File");
         saveOptionsMenu.add(SaveToFileMenuItem);
+        SaveToFileMenuItem.addActionListener(myNewFileJSON);
+
+        // Set menu
         setJMenuBar(menuBar);
         // Field editor
         // NEW WORLD
@@ -121,6 +129,7 @@ public class MainFrame extends JFrame {
         editorPanel.add(myColLabel);
         editorPanel.add(myColSlider);
 
+        repaint();
         add(editorPanel, BorderLayout.EAST);
         pack();
 
@@ -157,7 +166,9 @@ public class MainFrame extends JFrame {
                                 + "\nRows : " + xRow_MAX + "\n"
                                 + "\nColumns : " + yRow_MAX + "\n", "NaN error", JOptionPane.ERROR_MESSAGE);
                     } else {
+                        gameField.allCells.allCells.clear();
                         gameField.setColsRows(xRow, yCol);
+
                         gameField.repaint();
                     }
 
@@ -166,6 +177,24 @@ public class MainFrame extends JFrame {
                             "Error\n Invalid input. Either row or column number was not a valid number!", "NaN error", JOptionPane.ERROR_MESSAGE);
                 }
             }
+        }
+    }
+
+    private static class saveItemToJSONListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            gameField.allCells.saveToJSONFile();
+            System.err.println("Saved");
+        }
+    }
+
+    private static class loadJSONToListListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            gameField.allCells.loadFromJSONFile();
+            gameField.repaint();
+            System.err.println("Loaded");
         }
     }
 
@@ -187,15 +216,45 @@ public class MainFrame extends JFrame {
         public void mousePressed(MouseEvent e) {
             try {
                 final Point startPoint = e.getPoint();
-                
+
                 int newX = (int) (Math.floor(startPoint.x / 20d) * 20) / 20;
                 int newY = (int) (Math.floor(startPoint.y / 20d) * 20) / 20;
+
+                System.err.println("Click found at: " + newX + " " + newY);
+                if (gameField.allCells.allCells.size() > 0) {
+                    /*for (Cell fillCell : gameField.allCells.allCells) {
+                        int cellX = fillCell.getCellPointX();
+                        int cellY = fillCell.getCellPointY();
+                        // Find matching cell if found delete it
+                        System.err.println(cellX + "-" + newX + " " + cellY + "-" + newY);
+                        if (cellX == newX && cellY == newY) {
+                            System.err.println("Cell found");
+                            //gameField.allCells.allCells.remove(fillCell);
+                        }
+                    }*/
+                    for (Iterator<Cell> iterator = gameField.allCells.allCells.iterator(); iterator.hasNext();) {
+                        Cell cellKey = iterator.next();
+                        int cellX = cellKey.getCellPointX();
+                        int cellY = cellKey.getCellPointY();
+                        // Find matching cell if found delete it
+                        System.err.println(cellX + "-" + newX + " " + cellY + "-" + newY);
+                        if (cellX == newX && cellY == newY) {
+                            System.err.println("Size before " + gameField.allCells.allCells.size());
+                            System.err.println("Cell found");
+                            iterator.remove();
+                            repaint();
+                            System.err.println("Size after" + gameField.allCells.allCells.size());
+
+                            //gameField.allCells.allCells.remove(fillCell);
+                        }
+                    }
+                }
+
                 Point newCellPoint = new Point(newX, newY);
-                
+
                 Objects.ObjectEnumNames selectedType = (Objects.ObjectEnumNames) ObjectNamesComboBox.getSelectedItem();
-                System.err.println(selectedType.getClassName());
-                
-                Class clazz = Class.forName("Objects."+selectedType.getClassName());
+
+                Class clazz = Class.forName("Objects." + selectedType.getClassName());
 
                 Cell cellTest = (Cell) clazz.getDeclaredConstructor(Point.class).newInstance(newCellPoint);
                 gameField.allCells.allCells.add(cellTest);

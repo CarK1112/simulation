@@ -13,7 +13,7 @@ public enum ObjectEnumNames {
 
     // String name (may contain spaces), className (assigned class to)
     TIGER("Tiger","Tiger"),
-    GAZELLE("Gaz elle","Gazelle");
+    GAZELLE("Gazelle","Gazelle");
 
     private String displayName,className;
 
