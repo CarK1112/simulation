@@ -52,7 +52,7 @@ public class MainFrame extends JFrame {
 
         gameField.addMouseListener(myPanelListener);
 
-        /*gameField.allCells.allCells.add(cellTest);
+        /*gameField.allCells.allCells.add(cellWithClass);
         gameField.allCells.allCells.add(cellTest1);
         gameField.allCells.allCells.add(cellTest3);*/
         System.err.println(gameField.allCells.allCells.size());
@@ -168,7 +168,6 @@ public class MainFrame extends JFrame {
                     } else {
                         gameField.allCells.allCells.clear();
                         gameField.setColsRows(xRow, yCol);
-
                         gameField.repaint();
                     }
 
@@ -190,6 +189,7 @@ public class MainFrame extends JFrame {
     }
 
     private static class loadJSONToListListener implements ActionListener {
+
         @Override
         public void actionPerformed(ActionEvent e) {
             gameField.allCells.loadFromJSONFile();
@@ -219,19 +219,10 @@ public class MainFrame extends JFrame {
 
                 int newX = (int) (Math.floor(startPoint.x / 20d) * 20) / 20;
                 int newY = (int) (Math.floor(startPoint.y / 20d) * 20) / 20;
+                boolean cellFound = false;
 
                 System.err.println("Click found at: " + newX + " " + newY);
                 if (gameField.allCells.allCells.size() > 0) {
-                    /*for (Cell fillCell : gameField.allCells.allCells) {
-                        int cellX = fillCell.getCellPointX();
-                        int cellY = fillCell.getCellPointY();
-                        // Find matching cell if found delete it
-                        System.err.println(cellX + "-" + newX + " " + cellY + "-" + newY);
-                        if (cellX == newX && cellY == newY) {
-                            System.err.println("Cell found");
-                            //gameField.allCells.allCells.remove(fillCell);
-                        }
-                    }*/
                     for (Iterator<Cell> iterator = gameField.allCells.allCells.iterator(); iterator.hasNext();) {
                         Cell cellKey = iterator.next();
                         int cellX = cellKey.getCellPointX();
@@ -239,26 +230,25 @@ public class MainFrame extends JFrame {
                         // Find matching cell if found delete it
                         System.err.println(cellX + "-" + newX + " " + cellY + "-" + newY);
                         if (cellX == newX && cellY == newY) {
-                            System.err.println("Size before " + gameField.allCells.allCells.size());
-                            System.err.println("Cell found");
+                            cellFound = true;
                             iterator.remove();
-                            repaint();
-                            System.err.println("Size after" + gameField.allCells.allCells.size());
-
-                            //gameField.allCells.allCells.remove(fillCell);
                         }
                     }
+
+                }
+                if (!cellFound) {
+                    // set new point
+                    Point newCellPoint = new Point(newX, newY);
+                    // Create a new instance of the selected object
+                    Objects.ObjectEnumNames selectedType = (Objects.ObjectEnumNames) ObjectNamesComboBox.getSelectedItem();
+                    Class className = Class.forName("Objects." + selectedType.getClassName());
+                    Cell cellWithClass = (Cell) className.getDeclaredConstructor(Point.class).newInstance(newCellPoint);
+                    // Add the cell
+                    gameField.allCells.allCells.add(cellWithClass);
                 }
 
-                Point newCellPoint = new Point(newX, newY);
-
-                Objects.ObjectEnumNames selectedType = (Objects.ObjectEnumNames) ObjectNamesComboBox.getSelectedItem();
-
-                Class clazz = Class.forName("Objects." + selectedType.getClassName());
-
-                Cell cellTest = (Cell) clazz.getDeclaredConstructor(Point.class).newInstance(newCellPoint);
-                gameField.allCells.allCells.add(cellTest);
                 repaint();
+
             } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
                 Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
             }
