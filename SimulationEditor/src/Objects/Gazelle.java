@@ -5,7 +5,6 @@
  */
 package Objects;
 
-import World.Cell;
 import java.awt.Color;
 import java.awt.Point;
 
@@ -13,9 +12,13 @@ import java.awt.Point;
  *
  * @author cardosoken
  */
-public class Gazelle extends Cell{
+public class Gazelle extends Entity {
+
+        private Gazelle Gazelle;
     
-        private Color color = Color.YELLOW;
+    private Color color = Color.YELLOW;
+    //private String className = getClass().getName();
+
     public Gazelle(Point pPoint) {
         super(pPoint);
     }
@@ -24,7 +27,12 @@ public class Gazelle extends Cell{
         this.color = pColor;
     }
 
+    @Override
     public Color getCellColor() {
         return color;
+    }
+
+    public String getClassName() {
+        return getClass().getName();
     }
 }

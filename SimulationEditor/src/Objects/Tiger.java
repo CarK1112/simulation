@@ -5,7 +5,6 @@
  */
 package Objects;
 
-import World.Cell;
 import java.awt.Color;
 import java.awt.Point;
 
@@ -13,10 +12,13 @@ import java.awt.Point;
  *
  * @author cardosoken
  */
-public class Tiger extends Cell {
+public class Tiger extends Entity {
 
-    private Color color = Color.BLACK;
+    private Tiger Tiger;
+
     
+    private Color color = Color.BLACK;
+    //private String className = getClass().getName();
     public Tiger(Point pPoint) {
         super(pPoint);
     }
@@ -25,7 +27,13 @@ public class Tiger extends Cell {
         this.color = pColor;
     }
 
+    @Override
     public Color getCellColor() {
         return color;
     }
+
+    public String getClassName() {
+        return getClass().getName();
+    }
+    
 }

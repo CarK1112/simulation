@@ -3,19 +3,20 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package World;
+package Objects;
 
 import java.awt.Color;
 import java.awt.Point;
-
 /**
  *
  * @author cardosoken
  */
-public abstract class Cell {
+public abstract class Entity {
 
     Point cellPoint;
-    public Cell(Point pPoint) {
+
+    public Entity(Point pPoint) {
+
         this.cellPoint = pPoint;
     }
 
@@ -34,5 +35,18 @@ public abstract class Cell {
             return -1;
         }
     }
-    public abstract Color getCellColor();    
+
+    public int setCellPointX(int pStepX) {
+        cellPoint.x = cellPoint.x + pStepX;
+        return cellPoint.x;
+    }
+
+    public int setCellPointY(int pStepY) {
+        cellPoint.y = cellPoint.y + pStepY;
+        return cellPoint.y;
+    }
+
+    public abstract Color getCellColor();
+
+    //public abstract String getClassName();
 }

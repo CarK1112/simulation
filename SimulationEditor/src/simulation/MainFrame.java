@@ -1,13 +1,17 @@
-package simulation;
+package Simulation;
 
+import Draw.DrawPanel;
 import Objects.Gazelle;
 import Objects.Tiger;
-import World.Cell;
+import Objects.Entity;
+import Server.Save;
+import Server.Load;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -27,16 +31,25 @@ public class MainFrame extends JFrame {
     static final int yRow_MIN = 10;
     static final int yRow_MAX = 50;
     static final int yRow_INIT = 10;
-
+    static Thread updateCellsThread;
     private static DrawPanel gameField = new DrawPanel();
     JPanel myEASTPanel = new JPanel();
     JSlider myRowSlider, myColSlider;
 
+    // Settings 
     changeGridListener myNewGrid = new changeGridListener();
     newItemChangeListener myNewItem = new newItemChangeListener();
     PanelListener myPanelListener = new PanelListener();
     saveItemToJSONListener myNewFileJSON = new saveItemToJSONListener();
     loadJSONToListListener myLoadedFileJSON = new loadJSONToListListener();
+    saveItemToServerListener myNewServerJSON = new saveItemToServerListener();
+    loadServerToListListener myLoadServerToListListener = new loadServerToListListener();
+    // Game options
+    startGameAction newStartGameAction = new startGameAction();
+
+    // Server and file loading and saving
+    private static Save mySave = new Save();
+    private static Load myLoad = new Load();
 
     JComboBox<Objects.ObjectEnumNames> ObjectNamesComboBox = new JComboBox<>();
 
@@ -46,16 +59,9 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        Cell cellTest = new Tiger(new Point(0, 1));
-        Cell cellTest1 = new Gazelle(new Point(0, 5));
-        Cell cellTest3 = new Tiger(new Point(5, 4));
-
         gameField.addMouseListener(myPanelListener);
 
-        /*gameField.allCells.allCells.add(cellWithClass);
-        gameField.allCells.allCells.add(cellTest1);
-        gameField.allCells.allCells.add(cellTest3);*/
-        System.err.println(gameField.allCells.allCells.size());
+        System.err.println(gameField.allCells.allEntities.size());
 
         // Menu bar
         JMenuBar menuBar = new JMenuBar();
@@ -73,6 +79,9 @@ public class MainFrame extends JFrame {
 
         JMenuItem loadFromServer = new JMenuItem("From server");
         loadOptionsMenu.add(loadFromServer);
+        loadFromServer.addActionListener(myLoadServerToListListener);
+        
+        
         // Load->From file
         JMenuItem loadFromFile = new JMenuItem("From File");
         loadOptionsMenu.add(loadFromFile);
@@ -83,6 +92,8 @@ public class MainFrame extends JFrame {
         // Save->To server
         JMenuItem saveToServerMenuItem = new JMenuItem("Save to server");
         saveOptionsMenu.add(saveToServerMenuItem);
+        saveToServerMenuItem.addActionListener(myNewServerJSON);
+
         // Save->AS file
         JMenuItem SaveToFileMenuItem = new JMenuItem("Save as File");
         saveOptionsMenu.add(SaveToFileMenuItem);
@@ -122,12 +133,24 @@ public class MainFrame extends JFrame {
 
         ObjectNamesComboBox.setModel(new DefaultComboBoxModel<>(Objects.ObjectEnumNames.values()));
 
+        Button startGameButton = new Button("start Sim");
+        startGameButton.addActionListener(newStartGameAction);
+        editorPanel.add(startGameButton);
         editorPanel.add(cellTitles);
         editorPanel.add(ObjectNamesComboBox);
         editorPanel.add(myRowLabel);
         editorPanel.add(myRowSlider);
         editorPanel.add(myColLabel);
         editorPanel.add(myColSlider);
+
+        /*Entity cellTest = new Tiger(new Point(0, 1));
+        Entity cellTest1 = new Gazelle(new Point(0, 5));
+        Entity cellTest3 = new Tiger(new Point(5, 4));
+        gameField.allCells.allEntities.add(cellTest);
+        gameField.allCells.allEntities.add(cellTest1);
+        gameField.allCells.allEntities.add(cellTest3);*/
+        //gameField.allCells.loadFromJSONFile();
+        gameField.repaint();
 
         repaint();
         add(editorPanel, BorderLayout.EAST);
@@ -166,7 +189,7 @@ public class MainFrame extends JFrame {
                                 + "\nRows : " + xRow_MAX + "\n"
                                 + "\nColumns : " + yRow_MAX + "\n", "NaN error", JOptionPane.ERROR_MESSAGE);
                     } else {
-                        gameField.allCells.allCells.clear();
+                        gameField.allCells.allEntities.clear();
                         gameField.setColsRows(xRow, yCol);
                         gameField.repaint();
                     }
@@ -179,11 +202,54 @@ public class MainFrame extends JFrame {
         }
     }
 
+    private static class startGameAction implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            updateCellsThread = new Thread(() -> {
+                try {
+                    while (true) {
+                        Thread.sleep(1000);
+                        gameField.doSteps();
+                        gameField.repaint();
+                        System.err.println("LEL");
+                    }
+                } catch (InterruptedException e1) {
+                    System.out.println("my thread interrupted");
+                }
+            });
+            updateCellsThread.start();
+
+            System.err.println("Loaded");
+        }
+    }
+
+    // FALSE -> SAVES TO LOCAL
     private static class saveItemToJSONListener implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            gameField.allCells.saveToJSONFile();
+            try {
+                gameField.allCells.saveToJSONFile(false);
+            } catch (IOException ex) {
+                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            System.err.println("Saved");
+        }
+    }
+
+    // TRUE -> SAVE TO REMOTE
+    private static class saveItemToServerListener implements ActionListener {
+// Save to server
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                mySave.sendData(gameField.allCells.saveToJSONFile(true));
+
+            } catch (IOException ex) {
+                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+            }
             System.err.println("Saved");
         }
     }
@@ -192,9 +258,24 @@ public class MainFrame extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            gameField.allCells.loadFromJSONFile();
+            gameField.allCells.loadFromJSONFile(false,"");
             gameField.repaint();
             System.err.println("Loaded");
+        }
+    }
+
+    private static class loadServerToListListener implements ActionListener {
+        // Load JSON from Server
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                String JSONData = myLoad.readData();
+                gameField.allCells.loadFromJSONFile(true,JSONData);
+            } catch (IOException ex) {
+                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            gameField.repaint();
         }
     }
 
@@ -202,56 +283,59 @@ public class MainFrame extends JFrame {
 
         @Override
         public void stateChanged(ChangeEvent ce) {
-            System.err.println(gameField.allCells.allCells.size());
+            //System.err.println(gameField.allCells.allEntities.size());
             int xSlider = myRowSlider.getValue();
             int ySlider = myColSlider.getValue();
             gameField.setColsRows(xSlider, ySlider);
             gameField.repaint();
         }
-
     }
 
     class PanelListener extends MouseAdapter {
 
         public void mousePressed(MouseEvent e) {
-            try {
-                final Point startPoint = e.getPoint();
 
-                int newX = (int) (Math.floor(startPoint.x / 20d) * 20) / 20;
-                int newY = (int) (Math.floor(startPoint.y / 20d) * 20) / 20;
-                boolean cellFound = false;
+            final Point startPoint = e.getPoint();
 
-                System.err.println("Click found at: " + newX + " " + newY);
-                if (gameField.allCells.allCells.size() > 0) {
-                    for (Iterator<Cell> iterator = gameField.allCells.allCells.iterator(); iterator.hasNext();) {
-                        Cell cellKey = iterator.next();
-                        int cellX = cellKey.getCellPointX();
-                        int cellY = cellKey.getCellPointY();
-                        // Find matching cell if found delete it
-                        System.err.println(cellX + "-" + newX + " " + cellY + "-" + newY);
-                        if (cellX == newX && cellY == newY) {
-                            cellFound = true;
-                            iterator.remove();
+            if (startPoint.x < gameField.getGameFieldSizeX() && startPoint.y < gameField.getGameFieldSizeY()) {
+                try {
+                    int newX = (int) (Math.floor(startPoint.x / gameField.getCellSize()) * gameField.getCellSize()) / gameField.getCellSize();
+                    int newY = (int) (Math.floor(startPoint.y / gameField.getCellSize()) * gameField.getCellSize()) / gameField.getCellSize();
+                    boolean cellFound = false;
+
+                    System.err.println("Click found at: " + newX + " " + newY);
+                    if (gameField.allCells.allEntities.size() > 0) {
+                        for (Iterator<Entity> iterator = gameField.allCells.allEntities.iterator(); iterator.hasNext();) {
+                            Entity cellKey = iterator.next();
+                            int cellX = cellKey.getCellPointX();
+                            int cellY = cellKey.getCellPointY();
+                            // Find matching cell if found delete it
+                            System.err.println(cellX + "-" + newX + " " + cellY + "-" + newY);
+                            if (cellX == newX && cellY == newY) {
+                                cellFound = true;
+                                iterator.remove();
+                            }
                         }
+
+                    }
+                    if (!cellFound) {
+                        // set new point
+                        Point newCellPoint = new Point(newX, newY);
+                        // Create a new instance of the selected object
+                        Objects.ObjectEnumNames selectedType = (Objects.ObjectEnumNames) ObjectNamesComboBox.getSelectedItem();
+                        Class className = Class.forName("Objects." + selectedType.getClassName());
+                        Entity cellWithClass = (Entity) className.getDeclaredConstructor(Point.class).newInstance(newCellPoint);
+                        // Add the cell
+                        gameField.allCells.allEntities.add(cellWithClass);
                     }
 
-                }
-                if (!cellFound) {
-                    // set new point
-                    Point newCellPoint = new Point(newX, newY);
-                    // Create a new instance of the selected object
-                    Objects.ObjectEnumNames selectedType = (Objects.ObjectEnumNames) ObjectNamesComboBox.getSelectedItem();
-                    Class className = Class.forName("Objects." + selectedType.getClassName());
-                    Cell cellWithClass = (Cell) className.getDeclaredConstructor(Point.class).newInstance(newCellPoint);
-                    // Add the cell
-                    gameField.allCells.allCells.add(cellWithClass);
-                }
+                    repaint();
 
-                repaint();
-
-            } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                    Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
+
         }
     }
 
