@@ -5,7 +5,6 @@
  */
 package Objects;
 
-import World.Cell;
 import java.awt.Color;
 import java.awt.Point;
 
@@ -13,25 +12,76 @@ import java.awt.Point;
  *
  * @author cardosoken
  */
-public class Tiger extends Cell {
+public class Tiger extends Entity {
 
-    private Color color = Color.BLACK;
+    Tiger Tiger;
+
+    Color color = Color.BLACK;
+    String enemy = "Mouse";
+    //private String className = getClass().getName();
+    Point cellPoint;
 
     public Tiger(Point pPoint) {
-        super(pPoint);
+
+        this.cellPoint = pPoint;
+    }
+
+    public Point getEntityPoint() {
+        return cellPoint;
+    }
+
+    public int getCellPointX() {
+        return cellPoint.x;
+    }
+
+    public int getCellPointY() {
+        return cellPoint.y;
+    }
+    public int movedir() {
+        return cellPoint.x;
+    }
+
+    public String getEnemy() {
+        return enemy;
     }
 
     public void setColor(Color pColor) {
         this.color = pColor;
     }
 
+    @Override
     public Color getCellColor() {
         return color;
     }
 
+    @Override
     public String getClassName() {
-        String className = String.class.getName();
-        className = className.substring(className.lastIndexOf('.') + 1);
-        return className;
+        return getClass().getSimpleName();
+    }
+
+    public void doStep(Entity pGazelle) {
+
+        if (getCellPointX() < pGazelle.getCellPointX()) {
+            cellPoint.x = cellPoint.x + 1;
+        }
+        else if (getCellPointY() < pGazelle.getCellPointY()) {
+            cellPoint.y = cellPoint.y + 1;
+        }
+        else if (getCellPointX() > pGazelle.getCellPointX()) {
+            cellPoint.x = cellPoint.x - 1;
+        }
+        else if (getCellPointY() > pGazelle.getCellPointY()) {
+            cellPoint.y = cellPoint.y - 1;
+        }
+    }
+
+    @Override
+    public void resetCellPointX(int pNewPos) {
+        cellPoint.x = pNewPos;
+    }
+
+    @Override
+    public void resetCellPointY(int pNewPos) {
+        cellPoint.y = pNewPos;
     }
 }
