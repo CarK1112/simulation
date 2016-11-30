@@ -20,7 +20,7 @@ import java.net.URLEncoder;
  */
 public class Save {
 
-    public void sendData(String pData) throws MalformedURLException, ProtocolException, IOException {
+    public void sendData(String pData, String pFileName) throws MalformedURLException, ProtocolException, IOException {
         String json = pData;
         System.out.println(json);
 
@@ -30,12 +30,15 @@ public class Save {
         con.setDoOutput(true);
         con.setRequestMethod("POST");
         con.setRequestProperty("json", json);
-
+        con.setRequestProperty("name", pFileName);
+        
         OutputStream os = con.getOutputStream();
         DataOutputStream wr = new DataOutputStream(con.getOutputStream());
         //wr.write(new String("json=" + json).getBytes());
         String param = "json=" + URLEncoder.encode(json, "UTF-8");
+        String param2 = "name=" + URLEncoder.encode(pFileName, "UTF-8");
         wr.write(param.getBytes());
+        wr.write(param2.getBytes());
 
         wr.flush();
         wr.close();

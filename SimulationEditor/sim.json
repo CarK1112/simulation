@@ -1,2 +1,2 @@
-[{"type":"Tiger","properties":{"color":{"value":-16777216,"falpha":0.0},"cellPoint":{"x":2,"y":3}}},
-{"type":"Tiger","properties":{"color":{"value":-16777216,"falpha":0.0},"cellPoint":{"x":4,"y":5}}}]
+[{"type":"Tiger","properties":{"color":{"value":-16777216,"falpha":0.0},"enemy":"Mouse","cellPoint":{"x":2,"y":1}}},
+{"type":"Gazelle","properties":{"color":{"value":-256,"falpha":0.0},"enemy":"Tiger","cellPoint":{"x":2,"y":3}}}]

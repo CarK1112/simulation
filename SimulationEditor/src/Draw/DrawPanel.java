@@ -2,8 +2,12 @@ package Draw;
 
 import Objects.AllEntities;
 import Objects.Entity;
+import Objects.Gazelle;
+import Objects.Tiger;
 import java.awt.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
@@ -26,7 +30,7 @@ public class DrawPanel extends JPanel {
     Color forgroundColor = Color.BLACK;
     // Field resolution
     private static final int myX = 500; // 1000
-    private static final int myY = 400; // 800
+    private static final int myY = 500; // 800
 
     private int cellSize = 20;
 
@@ -44,6 +48,13 @@ public class DrawPanel extends JPanel {
         //
         super.paintComponent(g);
         if (firstTimeDraw == false) {
+            /*for (int o = 0; o < 20; o++) {
+                Entity cellTest = new Tiger(new Point((1 + (int) (Math.random() * ((rows - 1) + 1))), (1 + (int) (Math.random() * ((rows - 1) + 1)))));
+                allCells.allEntities.add(cellTest);
+                Entity cellTest2 = new Gazelle(new Point((1 + (int) (Math.random() * ((rows - 1) + 1))), (1 + (int) (Math.random() * ((rows - 1) + 1)))));
+                allCells.allEntities.add(cellTest2);
+            }*/
+
             // Build field
             g.setColor(Color.BLACK);
             // Game Dimension field
@@ -87,10 +98,10 @@ public class DrawPanel extends JPanel {
             // Insert the new cells
             if (allCells.allEntities.size() > 0) {
                 for (Entity fillCell : allCells.allEntities) {
-                        int cellX = (fillCell.getCellPointX() * cellSize);
-                        int cellY = (fillCell.getCellPointY() * cellSize);
-                        g.setColor(fillCell.getCellColor());
-                        g.fillRect(cellX, cellY, cellSize, cellSize);
+                    int cellX = (fillCell.getCellPointX() * cellSize);
+                    int cellY = (fillCell.getCellPointY() * cellSize);
+                    g.setColor(fillCell.getCellColor());
+                    g.fillRect(cellX, cellY, cellSize, cellSize);
 
                 }
             }
@@ -131,11 +142,73 @@ public class DrawPanel extends JPanel {
         return rows;
     }
 
+    public Entity getTiger() {
+        Entity e = null;
+        Iterator<Entity> iter = allCells.allEntities.iterator();
+        while (iter.hasNext()) {
+            Entity entity = iter.next();
+            if (entity instanceof Tiger) {
+                e = entity;
+            }
+        }
+        return e;
+    }
+
+    public Entity getGazelle() {
+        Entity e = null;
+        Iterator<Entity> iter = allCells.allEntities.iterator();
+        while (iter.hasNext()) {
+            Entity entity = iter.next();
+            if (entity instanceof Gazelle) {
+                e = entity;
+            }
+        }
+        return e;
+    }
+
     public void doSteps() {
         if (allCells.allEntities.size() > 0) {
-            for (Entity fillCell : allCells.allEntities) {
-                fillCell.setCellPointX(1);
-                fillCell.setCellPointY(1);
+            Iterator<Entity> iter = allCells.allEntities.iterator();
+            while (iter.hasNext()) {
+                Entity entity = iter.next();
+
+                if (entity instanceof Tiger) {
+
+                    if (entity.getCellPointX() == rows) {
+                        entity.resetCellPointX(0);
+                    } else if (entity.getCellPointY() == cols) {
+                        entity.resetCellPointY(0);
+                    } else if (entity.getCellPointX() == 0) {
+                        entity.resetCellPointX(rows);
+                    } else if (entity.getCellPointY() == 0) {
+                        entity.resetCellPointY(cols);
+                    } else {
+                        if (getGazelle() != null) {
+                            entity.doStep(getGazelle());
+                        }
+                    }
+                }
+                if (entity instanceof Gazelle) {
+                    if (entity.getCellPointX() == rows) {
+                        entity.resetCellPointX(0);
+                    } else if (entity.getCellPointY() == cols) {
+                        entity.resetCellPointY(0);
+                    } else if (entity.getCellPointX() == 0) {
+                        entity.resetCellPointX(rows);
+                    } else if (entity.getCellPointY() == 0) {
+                        entity.resetCellPointY(cols);
+                    } else {
+                        if (getTiger() != null) {
+                            entity.doStep(getTiger());
+                            if (entity.getEntityPoint().equals(getTiger().getEntityPoint())) {
+                                System.err.println("REMOVED");
+                                iter.remove();
+                            }
+                        }
+                    }
+
+                }
+
             }
         }
     }

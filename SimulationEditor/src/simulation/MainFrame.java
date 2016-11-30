@@ -21,20 +21,21 @@ import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class MainFrame extends JFrame {
 
-    static final int xRow_MIN = 10;
+    static final int xRow_MIN = 5;
     static final int xRow_MAX = 40;
-    static final int xRow_INIT = 10;
+    static final int xRow_INIT = 25;
 
-    static final int yRow_MIN = 10;
+    static final int yRow_MIN = 5;
     static final int yRow_MAX = 50;
-    static final int yRow_INIT = 10;
+    static final int yRow_INIT = 25;
     static Thread updateCellsThread;
     private static DrawPanel gameField = new DrawPanel();
     JPanel myEASTPanel = new JPanel();
-    JSlider myRowSlider, myColSlider;
+    private JSlider myRowSlider, myColSlider;
 
     // Settings 
     changeGridListener myNewGrid = new changeGridListener();
@@ -54,15 +55,10 @@ public class MainFrame extends JFrame {
     JComboBox<Objects.ObjectEnumNames> ObjectNamesComboBox = new JComboBox<>();
 
     public MainFrame() {
-
-        setSize(1000, 100);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
-
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        this.setLocation(dim.width / 2 - this.getSize().width / 2, dim.height / 2 - this.getSize().height / 2);
         gameField.addMouseListener(myPanelListener);
-
-        System.err.println(gameField.allCells.allEntities.size());
-
         // Menu bar
         JMenuBar menuBar = new JMenuBar();
         // File Menu
@@ -80,8 +76,7 @@ public class MainFrame extends JFrame {
         JMenuItem loadFromServer = new JMenuItem("From server");
         loadOptionsMenu.add(loadFromServer);
         loadFromServer.addActionListener(myLoadServerToListListener);
-        
-        
+
         // Load->From file
         JMenuItem loadFromFile = new JMenuItem("From File");
         loadOptionsMenu.add(loadFromFile);
@@ -127,8 +122,6 @@ public class MainFrame extends JFrame {
         myColSlider.setPaintTicks(true);
         myColSlider.setPaintLabels(true);
 
-        add(gameField, BorderLayout.CENTER);
-
         JLabel cellTitles = new JLabel("Entities");
 
         ObjectNamesComboBox.setModel(new DefaultComboBoxModel<>(Objects.ObjectEnumNames.values()));
@@ -143,19 +136,11 @@ public class MainFrame extends JFrame {
         editorPanel.add(myColLabel);
         editorPanel.add(myColSlider);
 
-        /*Entity cellTest = new Tiger(new Point(0, 1));
-        Entity cellTest1 = new Gazelle(new Point(0, 5));
-        Entity cellTest3 = new Tiger(new Point(5, 4));
-        gameField.allCells.allEntities.add(cellTest);
-        gameField.allCells.allEntities.add(cellTest1);
-        gameField.allCells.allEntities.add(cellTest3);*/
-        //gameField.allCells.loadFromJSONFile();
+        setLayout(new BorderLayout());
         gameField.repaint();
-
-        repaint();
+        add(gameField, BorderLayout.CENTER);
         add(editorPanel, BorderLayout.EAST);
         pack();
-
         setVisible(true);
 
     }
@@ -209,10 +194,9 @@ public class MainFrame extends JFrame {
             updateCellsThread = new Thread(() -> {
                 try {
                     while (true) {
-                        Thread.sleep(1000);
+                        Thread.sleep(200);
                         gameField.doSteps();
                         gameField.repaint();
-                        System.err.println("LEL");
                     }
                 } catch (InterruptedException e1) {
                     System.out.println("my thread interrupted");
@@ -229,12 +213,19 @@ public class MainFrame extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            try {
-                gameField.allCells.saveToJSONFile(false);
-            } catch (IOException ex) {
-                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+            FileNameExtensionFilter filter = new FileNameExtensionFilter(".json", "json");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileFilter(filter);
+            if (fileChooser.showSaveDialog(gameField) == JFileChooser.APPROVE_OPTION) {
+
+                try {
+                    gameField.allCells.saveToJSONFile(false, fileChooser.getSelectedFile());
+                } catch (IOException ex) {
+                    Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                System.err.println("Saved");
             }
-            System.err.println("Saved");
+
         }
     }
 
@@ -244,13 +235,22 @@ public class MainFrame extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            try {
-                mySave.sendData(gameField.allCells.saveToJSONFile(true));
+            JTextField field1 = new JTextField("simulation.json");
+            Object[] message = {
+                "File name", field1,};
+            int option = JOptionPane.showConfirmDialog(gameField, message, "Enter the file name", JOptionPane.OK_CANCEL_OPTION);
+            if (option == JOptionPane.OK_OPTION) {
+                String filename = field1.getText();
+                if (filename != null && !filename.isEmpty()) {
+                    try {
+                        mySave.sendData(gameField.allCells.saveToJSONFile(true, null), filename);
 
-            } catch (IOException ex) {
-                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    System.err.println("Saved");
+                }
             }
-            System.err.println("Saved");
         }
     }
 
@@ -258,9 +258,16 @@ public class MainFrame extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            gameField.allCells.loadFromJSONFile(false,"");
-            gameField.repaint();
-            System.err.println("Loaded");
+            FileNameExtensionFilter filter = new FileNameExtensionFilter(".json", "json");
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileFilter(filter);
+            if (fileChooser.showOpenDialog(gameField) == JFileChooser.APPROVE_OPTION) {
+
+                gameField.allCells.loadFromJSONFile(false, "", fileChooser.getSelectedFile());
+                gameField.repaint();
+                System.err.println("Loaded");
+            }
+
         }
     }
 
@@ -271,7 +278,7 @@ public class MainFrame extends JFrame {
         public void actionPerformed(ActionEvent e) {
             try {
                 String JSONData = myLoad.readData();
-                gameField.allCells.loadFromJSONFile(true,JSONData);
+                gameField.allCells.loadFromJSONFile(true, JSONData, null);
             } catch (IOException ex) {
                 Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -303,14 +310,12 @@ public class MainFrame extends JFrame {
                     int newY = (int) (Math.floor(startPoint.y / gameField.getCellSize()) * gameField.getCellSize()) / gameField.getCellSize();
                     boolean cellFound = false;
 
-                    System.err.println("Click found at: " + newX + " " + newY);
                     if (gameField.allCells.allEntities.size() > 0) {
                         for (Iterator<Entity> iterator = gameField.allCells.allEntities.iterator(); iterator.hasNext();) {
                             Entity cellKey = iterator.next();
                             int cellX = cellKey.getCellPointX();
                             int cellY = cellKey.getCellPointY();
                             // Find matching cell if found delete it
-                            System.err.println(cellX + "-" + newX + " " + cellY + "-" + newY);
                             if (cellX == newX && cellY == newY) {
                                 cellFound = true;
                                 iterator.remove();

@@ -35,13 +35,12 @@ public class AllEntities {
         allEntities.remove(i);
     }
 
-    public String saveToJSONFile(boolean pLocation) throws IOException {
+    public String saveToJSONFile(boolean pLocation, File pChoosenFile) throws IOException {
         // FALSE = Save to local path
         // TRUE = Save to remote
         if (pLocation == false) {
             // Save locally
-            String filename = "sim.json";
-            File file = new File(/*getFilesDir(),*/filename);
+            File file = pChoosenFile;
             if (file.exists()) {
                 file.delete();
             }
@@ -89,7 +88,7 @@ public class AllEntities {
                 String animalJson = gsonExt.toJson(animal, Entity.class);
                 if (i != allEntities.size()) {
                     JSONString += animalJson + ",";
-                    
+
                 } else {
                     JSONString += animalJson;
                 }
@@ -139,12 +138,11 @@ public class AllEntities {
          */
     }
 
-    public void loadFromJSONFile(boolean pLocation, String pJSONData) {
+    public void loadFromJSONFile(boolean pLocation, String pJSONData, File pChoosenFile) {
         // FALSE = Save to local path
         // TRUE = Save to remote
         if (!pLocation) {
-            String filename = "sim.json";
-            File file = new File(/*getFilesDir(),*/filename);
+            File file = pChoosenFile;
             allEntities.clear();
             try {
                 BufferedReader buffReader = new BufferedReader(new FileReader(file));
@@ -184,23 +182,12 @@ public class AllEntities {
                 gsonExt = builder.create();
             }
 
-                if (pJSONData.startsWith("[")) {
-                    pJSONData = pJSONData.substring(1);
-                }
-                if (pJSONData.endsWith("]")) {
-                    pJSONData = pJSONData.substring(0, pJSONData.length() - 1);
-                }
-                System.out.println(pJSONData);
-                /*String[] parts = line.split(",");
-                for (String part : parts) {
-                    System.out.println(part);
-                    Entity myLoadedEntity = gsonExt.fromJson(part, Entity.class);
-                    if (myLoadedEntity != null) {
-                        allEntities.add(myLoadedEntity);
-                    }
-                }*/
-
-            
+            GsonBuilder gsonBuilder = new GsonBuilder();
+            gsonBuilder.registerTypeAdapter(Entity.class, new EntityAdapter());
+            Gson gson = gsonBuilder.create();
+            allEntities = gson.fromJson(pJSONData, new TypeToken<ArrayList<Entity>>() {
+            }.getType());
+            System.out.println(allEntities);
         }
     }
 }
