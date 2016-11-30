@@ -283,6 +283,7 @@ public class MainFrame extends JFrame {
             try {
                 String JSONData = myLoad.readData();
                 gameField.allCells.loadFromJSONFile(true, JSONData, null);
+                updateCellsThread.start();
             } catch (IOException ex) {
                 Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
             }
