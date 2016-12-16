@@ -1,20 +1,20 @@
 package Simulation;
 
 import Draw.DrawPanel;
-import Objects.Gazelle;
-import Objects.Tiger;
 import Objects.Entity;
 import Server.Save;
 import Server.Load;
+import Server.LoadFiles;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,6 +23,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+/**
+ *
+ * @author kenca
+ */
 public class MainFrame extends JFrame {
 
     static final int xRow_MIN = 5;
@@ -33,31 +37,39 @@ public class MainFrame extends JFrame {
     static final int yRow_MAX = 50;
     static final int yRow_INIT = 25;
     static Thread updateCellsThread;
-    private static DrawPanel gameField = new DrawPanel();
+    private static final DrawPanel gameField = new DrawPanel();
     JPanel myEASTPanel = new JPanel();
-    private JSlider myRowSlider, myColSlider;
+    private final JSlider myRowSlider;
+    private JSlider myColSlider;
 
-    // Settings 
+    // Listeners 
     changeGridListener myNewGrid = new changeGridListener();
     newItemChangeListener myNewItem = new newItemChangeListener();
     PanelListener myPanelListener = new PanelListener();
     saveItemToJSONListener myNewFileJSON = new saveItemToJSONListener();
     loadJSONToListListener myLoadedFileJSON = new loadJSONToListListener();
+    loadFromModalToFieldListener myLoadedFileJSONModel = new loadFromModalToFieldListener();
     saveItemToServerListener myNewServerJSON = new saveItemToServerListener();
-    loadServerToListListener myLoadServerToListListener = new loadServerToListListener();
     // Game options
     startGameAction newStartGameAction = new startGameAction();
+    stopGameAction newStopGameAction = new stopGameAction();
 
     // Server and file loading and saving
-    private static Save mySave = new Save();
+    private static final Save mySave = new Save();
     private static Load myLoad = new Load();
+    private static final LoadFiles myLoadFiles = new LoadFiles();
 
-    JComboBox<Objects.ObjectEnumNames> ObjectNamesComboBox = new JComboBox<>();
+    private JComboBox<Objects.ObjectEnumNames> ObjectNamesComboBox = new JComboBox<>();
+    // Load game
+    private static JComboBox myLoadedFiles = new JComboBox();
 
+    /**
+     *
+     */
     public MainFrame() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        this.setLocation(dim.width / 2 - this.getSize().width / 2, dim.height / 2 - this.getSize().height / 2);
+        this.setLocationRelativeTo(null);
         gameField.addMouseListener(myPanelListener);
         // Menu bar
         JMenuBar menuBar = new JMenuBar();
@@ -71,12 +83,6 @@ public class MainFrame extends JFrame {
         // Load
         JMenu loadOptionsMenu = new JMenu("Load");
         fileLoadMenu.add(loadOptionsMenu);
-        // Load->From server
-
-        JMenuItem loadFromServer = new JMenuItem("From server");
-        loadOptionsMenu.add(loadFromServer);
-        loadFromServer.addActionListener(myLoadServerToListListener);
-
         // Load->From file
         JMenuItem loadFromFile = new JMenuItem("From File");
         loadOptionsMenu.add(loadFromFile);
@@ -102,7 +108,7 @@ public class MainFrame extends JFrame {
         // EAST Layout
         BorderLayout eastLayout = new BorderLayout();
         JPanel editorPanel = new JPanel();
-        editorPanel.setPreferredSize(new Dimension(200, 20));
+        editorPanel.setPreferredSize(new Dimension(200, 100));
         editorPanel.setLayout(eastLayout);
 
         editorPanel.setLayout(new BoxLayout(editorPanel, BoxLayout.Y_AXIS));
@@ -122,68 +128,76 @@ public class MainFrame extends JFrame {
         myColSlider.setPaintTicks(true);
         myColSlider.setPaintLabels(true);
 
-        JLabel cellTitles = new JLabel("Entities");
-
         ObjectNamesComboBox.setModel(new DefaultComboBoxModel<>(Objects.ObjectEnumNames.values()));
 
         Button startGameButton = new Button("start Sim");
         startGameButton.addActionListener(newStartGameAction);
         editorPanel.add(startGameButton);
+
+        Button stopGameButton = new Button("stop Sim");
+        stopGameButton.addActionListener(newStopGameAction);
+        editorPanel.add(stopGameButton);
+
+        JButton addButton = new JButton("Load sim");
+        addButton.addActionListener(myLoadedFileJSONModel);
+
+        updateList();
+        editorPanel.add(myLoadedFiles);
+        editorPanel.add(addButton);
+
+        // Cells editor
+        JLabel cellTitles = new JLabel("Entities");
+
         editorPanel.add(cellTitles);
+
         editorPanel.add(ObjectNamesComboBox);
-        editorPanel.add(myRowLabel);
-        editorPanel.add(myRowSlider);
-        editorPanel.add(myColLabel);
-        editorPanel.add(myColSlider);
 
-        setLayout(new BorderLayout());
+       // editorPanel.add(myRowLabel);
+
+        //editorPanel.add(myRowSlider);
+
+        //editorPanel.add(myColLabel);
+
+        //editorPanel.add(myColSlider);
+
+        setLayout(
+                new BorderLayout());
         gameField.repaint();
-        add(gameField, BorderLayout.CENTER);
-        add(editorPanel, BorderLayout.EAST);
-        pack();
-        setVisible(true);
 
+        add(gameField, BorderLayout.CENTER);
+
+        add(editorPanel, BorderLayout.EAST);
+
+        pack();
+
+        setVisible(
+                true);
+
+    }
+
+    public static void updateList() {
+        try {
+            String json = myLoadFiles.readFiles();
+            if (!json.isEmpty()) {
+                JsonParser jsonParser = new JsonParser();
+                JsonArray filesArray = jsonParser.parse(json).getAsJsonArray();
+                for (JsonElement file : filesArray) {
+                    System.err.println(file.getAsString());
+                    myLoadedFiles.addItem(file.getAsString());
+                }
+            }
+
+        } catch (IOException ex) {
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private static class newItemChangeListener implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            JTextField xField = new JTextField(3);
-            JTextField yField = new JTextField(3);
-
-            JPanel myPanel = new JPanel();
-            myPanel.add(new JLabel("Rows:"));
-            myPanel.add(xField);
-            myPanel.add(Box.createHorizontalStrut(15)); // a spacer
-            myPanel.add(new JLabel("Columns :"));
-            myPanel.add(yField);
-
-            int result = JOptionPane.showConfirmDialog(null, myPanel,
-                    "Please Enter the desired rows and columns Values", JOptionPane.OK_CANCEL_OPTION);
-            if (result == JOptionPane.OK_OPTION) {
-
-                try {
-                    int xRow = Integer.parseInt(xField.getText());
-                    int yCol = Integer.parseInt(yField.getText());
-                    if (xRow_MAX < xRow || yRow_MAX < yCol) {
-                        JOptionPane.showMessageDialog(null,
-                                "Error\n"
-                                + "The number is greater than your input.\n"
-                                + "Allowed numbers are:\n"
-                                + "\nRows : " + xRow_MAX + "\n"
-                                + "\nColumns : " + yRow_MAX + "\n", "NaN error", JOptionPane.ERROR_MESSAGE);
-                    } else {
-                        gameField.allCells.allEntities.clear();
-                        gameField.setColsRows(xRow, yCol);
-                        gameField.repaint();
-                    }
-
-                } catch (NumberFormatException nan) {
-                    JOptionPane.showMessageDialog(null,
-                            "Error\n Invalid input. Either row or column number was not a valid number!", "NaN error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
+            gameField.allCells.allEntities.clear();
+            gameField.repaint();
         }
     }
 
@@ -208,7 +222,19 @@ public class MainFrame extends JFrame {
         }
     }
 
-    // FALSE -> SAVES TO LOCAL
+    private static class stopGameAction implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (updateCellsThread != null) {
+                updateCellsThread.interrupt();
+            }
+
+            System.err.println("Stopped");
+        }
+    }
+
+// FALSE -> SAVES TO LOCAL
     private static class saveItemToJSONListener implements ActionListener {
 
         @Override
@@ -229,7 +255,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    // TRUE -> SAVE TO REMOTE
+// TRUE -> SAVE TO REMOTE
     private static class saveItemToServerListener implements ActionListener {
 // Save to server
 
@@ -244,13 +270,14 @@ public class MainFrame extends JFrame {
                 if (filename != null && !filename.isEmpty()) {
                     try {
                         mySave.sendData(gameField.allCells.saveToJSONFile(true, null), filename);
-
                     } catch (IOException ex) {
-                        Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                        JOptionPane.showMessageDialog(gameField, "There was problem saving the file. Server may have changed.");
                     }
                     System.err.println("Saved");
                 }
             }
+            // Update our combobox
+            updateList();
         }
     }
 
@@ -271,18 +298,58 @@ public class MainFrame extends JFrame {
         }
     }
 
+    private class loadFromModalToFieldListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String filename = "";
+            try {
+                filename = myLoadedFiles.getSelectedItem().toString();
+                if (filename != null && !filename.isEmpty()) {
+                    String JSONData = myLoad.readData(filename);
+                    System.err.println(JSONData);
+                    if (!JSONData.equals(null) && JSONData != null) {
+                        gameField.allCells.loadFromJSONFile(true, JSONData, null);
+                        gameField.repaint();
+                    } else {
+                        JOptionPane.showMessageDialog(gameField, "File is invalid!");
+                    }
+                }
+
+            } catch (Exception ex) {
+                System.err.println("Error loading file");
+                JOptionPane.showMessageDialog(rootPane, "Error loading the file. File may have been deleted");
+            }
+        }
+    }
+
     private static class loadServerToListListener implements ActionListener {
         // Load JSON from Server
 
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                String JSONData = myLoad.readData();
-                gameField.allCells.loadFromJSONFile(true, JSONData, null);
-            } catch (IOException ex) {
-                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                JTextField field1 = new JTextField("simulation.json");
+                Object[] message = {
+                    "File name", field1,};
+                int option = JOptionPane.showConfirmDialog(gameField, message, "Enter the file name", JOptionPane.OK_CANCEL_OPTION);
+                if (option == JOptionPane.OK_OPTION) {
+                    String filename = field1.getText();
+                    if (filename != null && !filename.isEmpty()) {
+
+                        String JSONData = myLoad.readData(filename);
+                        System.err.println(JSONData + " - output of loaded file");
+                        if (!JSONData.equals(null) && JSONData != null) {
+                            gameField.allCells.loadFromJSONFile(true, JSONData, null);
+                            gameField.repaint();
+                        } else {
+                            JOptionPane.showMessageDialog(gameField, "Error loading the file. File may have been deleted");
+                        }
+                    }
+                }
+            } catch (HeadlessException | IOException ex) {
+                System.err.println("Error loading file");
             }
-            gameField.repaint();
         }
     }
 
@@ -303,7 +370,6 @@ public class MainFrame extends JFrame {
         public void mousePressed(MouseEvent e) {
 
             final Point startPoint = e.getPoint();
-
             if (startPoint.x < gameField.getGameFieldSizeX() && startPoint.y < gameField.getGameFieldSizeY()) {
                 try {
                     int newX = (int) (Math.floor(startPoint.x / gameField.getCellSize()) * gameField.getCellSize()) / gameField.getCellSize();
@@ -344,6 +410,10 @@ public class MainFrame extends JFrame {
         }
     }
 
+    /**
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         java.awt.EventQueue.invokeLater(new Runnable() {
 

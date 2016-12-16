@@ -21,11 +21,16 @@ public class Tiger extends Entity {
     //private String className = getClass().getName();
     Point cellPoint;
 
+    /**
+     *
+     * @param pPoint Tiger points
+     */
     public Tiger(Point pPoint) {
-
         this.cellPoint = pPoint;
     }
-
+    public void setNewPoint(Point pPoint) {
+        this.cellPoint = pPoint;
+    }
     public Point getEntityPoint() {
         return cellPoint;
     }
@@ -37,14 +42,26 @@ public class Tiger extends Entity {
     public int getCellPointY() {
         return cellPoint.y;
     }
+
+    /**
+     *
+     * @return Just testing things..
+     */
     public int movedir() {
         return cellPoint.x;
     }
-
+    /**
+     *
+     * @return Just testing things..
+     */
     public String getEnemy() {
         return enemy;
     }
 
+    /**
+     *
+     * @param pColor Color of the cell
+     */
     public void setColor(Color pColor) {
         this.color = pColor;
     }
@@ -59,20 +76,26 @@ public class Tiger extends Entity {
         return getClass().getSimpleName();
     }
 
-    public void doStep(Entity pGazelle) {
+    public Point doStep(Entity pGazelle) {
 
+        Point writeState = cellPoint;
         if (getCellPointX() < pGazelle.getCellPointX()) {
-            cellPoint.x = cellPoint.x + 1;
+            //cellPoint.x = cellPoint.x + 1;
+            writeState.x = cellPoint.x + 1;
         }
-        else if (getCellPointY() < pGazelle.getCellPointY()) {
-            cellPoint.y = cellPoint.y + 1;
+        if (getCellPointY() < pGazelle.getCellPointY()) {
+            //cellPoint.y = cellPoint.y + 1;
+            writeState.y = cellPoint.y + 1;
         }
-        else if (getCellPointX() > pGazelle.getCellPointX()) {
-            cellPoint.x = cellPoint.x - 1;
+        if (getCellPointX() > pGazelle.getCellPointX()) {
+            //cellPoint.x = cellPoint.x - 1;
+            writeState.x = cellPoint.x - 1;
         }
-        else if (getCellPointY() > pGazelle.getCellPointY()) {
-            cellPoint.y = cellPoint.y - 1;
+        if (getCellPointY() > pGazelle.getCellPointY()) {
+            //cellPoint.y = cellPoint.y - 1;
+            writeState.y = cellPoint.y - 1;
         }
+        return writeState;
     }
 
     @Override

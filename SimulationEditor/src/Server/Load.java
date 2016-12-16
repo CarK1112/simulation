@@ -16,12 +16,17 @@ import java.net.URL;
  */
 public class Load {
 
-    public String readData() throws IOException {
+    /**
+     *
+     * @param pFilename File name to read on
+     * @return JSON string
+     * @throws IOException
+     */
+    public String readData(String pFilename) throws IOException {
         String JSONData = "";
-        URL oracle = new URL("http://192.168.56.10/serss/simulation/simulation.json");
+        URL oracle = new URL("https://students.btsi.lu/carke/simulation/simulation.php?read="+pFilename);
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(oracle.openStream()));
-
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
             JSONData += inputLine;

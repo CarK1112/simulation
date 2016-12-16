@@ -12,8 +12,19 @@ package Objects;
 import com.google.gson.*;
 import java.lang.reflect.Type;
 
+/**
+ *
+ * @author kenca
+ */
 public class EntityAdapter implements JsonSerializer<Entity>, JsonDeserializer<Entity> {
 
+    /**
+     *
+     * @param src Entity
+     * @param typeOfSrc The Type of Entity
+     * @param context
+     * @return
+     */
     @Override
     public JsonElement serialize(Entity src, Type typeOfSrc, JsonSerializationContext context) {
         JsonObject result = new JsonObject();
@@ -23,6 +34,14 @@ public class EntityAdapter implements JsonSerializer<Entity>, JsonDeserializer<E
 
     }
 
+    /**
+     *
+     * @param json The element to deserialize from
+     * @param typeOfT The Type of (extracted from the jsonObject)
+     * @param context
+     * @return
+     * @throws JsonParseException Catch unrecognized JSON elements
+     */
     @Override
     public Entity deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
             throws JsonParseException {
