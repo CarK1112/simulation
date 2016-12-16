@@ -14,20 +14,64 @@ import java.awt.Point;
  */
 public abstract class Entity {
 
+    /**
+     *
+     * @param pPoint Sets the Point of a cell
+     */
+    public abstract void setNewPoint(Point pPoint);
+
+    /**
+     *
+     * @return point of the cell
+     */
     public abstract Point getEntityPoint();
+
+    /**
+     *
+     * @return X point
+     */
     public abstract int getCellPointX();
 
+    /**
+     *
+     * @return Y point
+     */
     public abstract int getCellPointY();
 
+    /**
+     *
+     * @return Cell color
+     */
     public abstract Color getCellColor();
 
+    /**
+     *
+     * @return class Name (Importing the type for the load function)
+     */
     public abstract String getClassName();
 
+    /**
+     *
+     * @return Does nothing, just trying things.
+     */
     public abstract String getEnemy();
 
-    public abstract void doStep(Entity pEntity);
+    /**
+     *
+     * @param pEntity The specific cell to perform the step
+     * @return
+     */
+    public abstract Point doStep(Entity pEntity);
 
+    /**
+     *
+     * @param pNewPos Reset the X point (Ref. Torus)
+     */
     public abstract void resetCellPointX(int pNewPos);
 
+    /**
+     *
+     * @param pNewPos Reset the Y point (Ref. Torus)
+     */
     public abstract void resetCellPointY(int pNewPos);
 }

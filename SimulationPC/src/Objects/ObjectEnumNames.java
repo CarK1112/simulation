@@ -12,7 +12,15 @@ package Objects;
 public enum ObjectEnumNames {
 
     // String name (may contain spaces), className (assigned class to)
+
+    /**
+     * Enum used to generate the ComboBox
+     */
     TIGER("Tiger","Tiger"),
+
+    /**
+     * Enum used to generate the ComboBox
+     */
     GAZELLE("Gazelle","Gazelle");
 
     private String displayName,className;
@@ -22,6 +30,10 @@ public enum ObjectEnumNames {
         this.className = className;
     }
 
+    /**
+     *
+     * @return Name of cell
+     */
     public String displayName() {
         return displayName;
     }
@@ -30,6 +42,10 @@ public enum ObjectEnumNames {
         return displayName;
     }
 
+    /**
+     *
+     * @return className of cell
+     */
     public String getClassName() {
         return className;
     }

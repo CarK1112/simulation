@@ -21,11 +21,16 @@ public class Gazelle extends Entity {
     //private String className = getClass().getName();
     Point cellPoint;
 
+    /**
+     *
+     * @param pPoint Set point
+     */
     public Gazelle(Point pPoint) {
-
         this.cellPoint = pPoint;
     }
-
+    public void setNewPoint(Point pPoint) {
+        this.cellPoint = pPoint;
+    }
     public Point getEntityPoint() {
         return cellPoint;
     }
@@ -42,6 +47,10 @@ public class Gazelle extends Entity {
         return enemy;
     }
 
+    /**
+     *
+     * @param pColor Set Color
+     */
     public void setColor(Color pColor) {
         this.color = pColor;
     }
@@ -55,16 +64,25 @@ public class Gazelle extends Entity {
         return getClass().getSimpleName();
     }
 
-    public void doStep(Entity pTiger) {
+    public Point doStep(Entity pTiger) {
+        Point writeState = cellPoint;
         if (getCellPointX() < pTiger.getCellPointX()) {
-            cellPoint.x = cellPoint.x - 1;
-        } else if (getCellPointY() < pTiger.getCellPointY()) {
-            cellPoint.y = cellPoint.y - 1;
-        } else if (getCellPointX() > pTiger.getCellPointX()) {
-            cellPoint.x = cellPoint.x + 1;
-        } else if (getCellPointY() > pTiger.getCellPointY()) {
-            cellPoint.y = cellPoint.y + 1;
+            //cellPoint.x = cellPoint.x + 1;
+            writeState.x = cellPoint.x - 1;
         }
+        if (getCellPointY() < pTiger.getCellPointY()) {
+            //cellPoint.y = cellPoint.y + 1;
+            writeState.y = cellPoint.y - 1;
+        }
+        if (getCellPointX() > pTiger.getCellPointX()) {
+            //cellPoint.x = cellPoint.x - 1;
+            writeState.x = cellPoint.x + 1;
+        }
+        if (getCellPointY() > pTiger.getCellPointY()) {
+            //cellPoint.y = cellPoint.y - 1;
+            writeState.y = cellPoint.y - 1;
+        }
+        return writeState;
     }
 
     @Override

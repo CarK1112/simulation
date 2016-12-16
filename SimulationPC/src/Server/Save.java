@@ -20,9 +20,16 @@ import java.net.URLEncoder;
  */
 public class Save {
 
+    /**
+     *
+     * @param pData JSONData
+     * @param pFileName Name of the file
+     * @throws MalformedURLException
+     * @throws ProtocolException
+     * @throws IOException
+     */
     public void sendData(String pData, String pFileName) throws MalformedURLException, ProtocolException, IOException {
         String json = pData;
-        System.out.println(json);
 
         String url = "http://192.168.56.10/serss/simulation/simulation.php";
         URL obj = new URL(url);
@@ -35,10 +42,8 @@ public class Save {
         OutputStream os = con.getOutputStream();
         DataOutputStream wr = new DataOutputStream(con.getOutputStream());
         //wr.write(new String("json=" + json).getBytes());
-        String param = "json=" + URLEncoder.encode(json, "UTF-8");
-        String param2 = "name=" + URLEncoder.encode(pFileName, "UTF-8");
+        String param = "json=" + URLEncoder.encode(json, "UTF-8")+"&"+"name=" + URLEncoder.encode(pFileName, "UTF-8");
         wr.write(param.getBytes());
-        wr.write(param2.getBytes());
 
         wr.flush();
         wr.close();

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="SimulationPC">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dist/SimulationPC.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
